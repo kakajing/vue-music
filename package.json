@@ -8,14 +8,15 @@
     "dev": "node build/dev-server.js",
     "start": "node build/dev-server.js",
     "build": "node build/build.js",
-    "lint": "eslint --ext .js,.vue src",
-    "jsonp": "0.2.1"
+    "lint": "eslint --ext .js,.vue src"
   },
   "dependencies": {
+    "babel-runtime": "^6.23.0",
+    "fastclick": "^1.0.6",
+    "jsonp": "^0.2.1",
     "vue": "^2.3.3",
     "vue-router": "^2.3.1",
-    "babel-runtime": "^6.23.0",
-    "fastclick": "^1.0.6"
+    "better-scroll": "^0.3.3"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.2",
@@ -54,7 +55,7 @@
     "rimraf": "^2.6.0",
     "style-loader": "^0.18.2",
     "stylus": "^0.54.5",
-    "stylus-loader":"^3.0.1",
+    "stylus-loader": "^3.0.1",
     "url-loader": "^0.5.8",
     "vue-loader": "^12.1.0",
     "vue-style-loader": "^3.0.1",
