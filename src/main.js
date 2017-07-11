@@ -5,6 +5,7 @@ import router from './router'
 import fastclick from 'fastclick'
 
 import 'common/stylus/index.styl'
+
 Vue.config.productionTip = false
 
 fastclick.attach(document.body)
