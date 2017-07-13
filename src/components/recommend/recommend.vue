@@ -1,22 +1,22 @@
 <template>
   <div class="recommend">
-    <scroll class="recommend-content" :data="discList">
+    <scroll ref="scroll" class="recommend-content" :data="discList">
       <div>
         <div v-if="recommends.length" class="slider-wrapper">
           <slider>
             <div v-for="item in recommends">
               <a :href="item.linkUrl">
-                <img :src="item.picUrl"/>
+                <img class="needsclick" :src="item.picUrl" @load="loadImage"/>
               </a>
             </div>
           </slider>
         </div>
-        <div class="recomend-list">
+        <div class="recommend-list">
           <h1 class="list-title">热门歌单推荐</h1>
           <ul>
             <li v-for="item in discList" class="item">
               <div class="icon">
-                <img width="60" height="60" :src="item.imgurl">
+                <img width="60" height="60" v-lazy="item.imgurl">
               </div>
               <div class="text">
                 <h2 class="name" v-html="item.creator.name"></h2>
@@ -26,16 +26,20 @@
           </ul>
         </div>
       </div>
-    </scroll>
 
+      <div class="loading-container" v-show="!discList.length">
+        <loading></loading>
+      </div>
+    </scroll>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
   import Slider from 'base/slider/slider'
   import Scroll from 'base/scroll/scroll'
-  import {getRecommend, getDiscList} from 'api/recommend'
-  import {ERR_OK} from 'api/config'
+  import Loading from 'base/loading/loading'
+  import { getRecommend, getDiscList } from 'api/recommend'
+  import { ERR_OK } from 'api/config'
 
   export default {
     data() {
@@ -62,17 +66,25 @@
             this.discList = res.data.list
           }
         })
+      },
+      loadImage() {
+        if (!this.checkloaded) {
+          this.checkloaded = true
+          this.$refs.scroll.refresh()
+        }
       }
     },
 
     components: {
       Slider,
-      Scroll
+      Scroll,
+      Loading
     }
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+
+<style lang="stylus" type="text/stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
 
   .recommend
@@ -80,6 +92,7 @@
     width: 100%
     top: 88px
     bottom: 0
+
     .recommend-content
       height: 100%
       overflow: hidden
