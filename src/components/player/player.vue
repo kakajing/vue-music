@@ -30,7 +30,7 @@
           <div class="progress-wrapper">
             <span class="time time-l">{{format(currentTime)}}</span>
             <div class="progress-bar-wrapper">
-              <progress-bar :percent="percent"></progress-bar>
+              <progress-bar :percent="percent" @percentChange="onProgressBarChange"></progress-bar>
             </div>
             <span class="time time-r">{{format(currentSong.duration)}}</span>
           </div>
@@ -204,6 +204,15 @@
         const minute = this._pad(interval / 60 | 0)
         const second = this._pad(interval % 60)
         return `${minute}:${second}`
+      },
+      // 拖动指针来定位到歌曲播放相应位置
+      onProgressBarChange(percent) {
+        const currentTime = this.currentSong.duration * percent
+        this.$refs.audio.currentTime = currentTime
+        // 拖到某个位置的时候播放
+        if (!this.playing) {
+          this.togglePlaying()
+        }
       },
       // 对时间进行补0，00:00
       _pad(num, n = 2) {
