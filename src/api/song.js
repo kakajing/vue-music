@@ -2,7 +2,7 @@ import {commendParams} from './config'
 import axios from 'axios'
 
 export function getLyric (mid) {
-  const url = 'api/lyric'
+  const url = '/api/lyric'
 
   const data = Object.assign({}, commendParams, {
     songmid: mid,

@@ -2,7 +2,7 @@
  * Created by user on 2017/7/9.
  */
 import jsonp from 'common/js/jsonp'
-import {commendParams, options} from './config'
+import {commendParams, options, options1} from './config'
 import axios from 'axios'
 
 export function getRecommend () {
@@ -34,4 +34,20 @@ export function getDiscList () {
   }).then((res) => {
     return Promise.resolve(res.data)
   })
+}
+
+export function getSongList (disstid) {
+  const url = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg'
+  const data = Object.assign({}, commendParams, {
+    disstid,
+    type: 1,
+    json: 1,
+    utf8: 1,
+    onlysong: 0,
+    platform: 'h5',
+    hostUin: 0,
+    needNewCode: 1,
+    g_tk: 390043301
+  })
+  return jsonp(url, data, options1)
 }
