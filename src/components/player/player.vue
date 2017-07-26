@@ -89,31 +89,34 @@
             <i @click.stop="togglePlaying" class="icon-mini" :class="miniIcon"></i>
           </progress-circle>
         </div>
-        <div class="control">
+        <div class="control" @click.stop="showPlaylist">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
+    <playlist ref="playlist"></playlist>
     <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"
             @ended="end"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import {mapGetters, mapMutations} from 'vuex'
+  import {mapGetters, mapMutations, mapActions} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from 'common/js/dom'
   import ProgressBar from 'base/progress-bar/progress-bar'
   import ProgressCircle from 'base/progress-circle/progress-circle'
   import {playMode} from 'common/js/config'
-  import {shuffle} from 'common/js/util'
   import Lyric from 'lyric-parser'
   import Scroll from 'base/scroll/scroll'
+  import Playlist from 'components/playlist/playlist'
+  import {playerMixin} from 'common/js/mixin'
 
   const transform = prefixStyle('transform')
   const transitionDuration = prefixStyle('transitionDuration')
 
   export default {
+    mixins: [playerMixin],
     data() {
       return {
         songReady: false,
@@ -144,18 +147,10 @@
       percent() {
         return this.currentTime / this.currentSong.duration
       },
-      iconMode() {
-        return this.mode === playMode.sequence ? 'icon-sequence' : this.mode ===
-        playMode.loop ? 'icon-loop' : 'icon-random'
-      },
       ...mapGetters([
         'fullScreen',
-        'playlist',
-        'currentSong',
         'playing',
-        'currentIndex',
-        'mode',
-        'sequenceList'
+        'currentIndex'
       ])
     },
     methods: {
@@ -260,6 +255,7 @@
       },
       ready() {
         this.songReady = true
+        this.savePlayHistory(this.currentIndex)
       },
       error() {
         this.songReady = true
@@ -286,31 +282,12 @@
           this.currentLyric.seek(currentTime * 1000)
         }
       },
-      changeMode() {
-        const mode = (this.mode + 1) % 3
-        this.setPlayMode(mode)
-        let list = null
-        if (mode === playMode.random) {
-          list = shuffle(this.sequenceList)
-        } else {
-          list = this.sequenceList
-        }
-        this.resetCurrentIndex(list)
-        this.setPlaylist(list)
-      },
-      resetCurrentIndex(list) {
-        let index = list.findIndex((item) => {
-          return item.id === this.currentSong.id
-        })
-        this.setCurrentIndex(index)
-      },
       getLyric() {
         this.currentSong.getLyric().then((lyric) => {
           this.currentLyric = new Lyric(lyric, this.handleLyric)
           if (this.playing) {
             this.currentLyric.play()
           }
-          console.log(this.currentLyric)
         }).catch(() => {
           // 歌词出现异常，释放
           this.currentLyric = null
@@ -387,6 +364,9 @@
         this.$refs.middleL.style.opacity = opacity
         this.$refs.middleL.style[transitionDuration] = `${time}ms`
       },
+      showPlaylist() {
+        this.$refs.playlist.show()
+      },
       // 对时间进行补0，00:00
       _pad(num, n = 2) {
         let len = num.toString().length
@@ -412,39 +392,45 @@
         }
       },
       ...mapMutations({
-        setFullScreen: 'SET_FULL_SCREEN',
-        setPlayingState: 'SET_PLAYING_STATE',
-        setCurrentIndex: 'SET_CURRENT_INDEX',
-        setPlayMode: 'SET_PLAY_MODE',
-        setPlaylist: 'SET_PLAYLIST'
+        setFullScreen: 'SET_FULL_SCREEN'
       }),
-      watch: {
-        currentSong(newSong, oldSong) {
-          if (newSong.id === oldSong.id) {
-            return
-          }
-          // 解决切换歌曲的时候歌词一直跳(歌词随着时间滚动而跳动的效果)
-          if (this.currentLyric) {
-            this.currentLyric.stop()
-          }
-          // 为了使手机端后台播放正常，使用setTimeout
-          setTimeout(() => {
-            this.$refs.audio.play()
-            this.getLyric()
-          }, 1000)
-        },
-        playing(newPlaying) {
-          const audio = this.$refs.audio
-          this.$nextTick(() => {
-            newPlaying ? audio.play() : audio.pause()
-          })
+      ...mapActions([
+        'savePlayHistory'
+      ])
+    },
+    watch: {
+      currentSong(newSong, oldSong) {
+        if (!newSong.id) {
+          return
         }
+        if (newSong.id === oldSong.id) {
+          return
+        }
+        // 解决切换歌曲的时候歌词一直跳(歌词随着时间滚动而跳动的效果)
+        if (this.currentLyric) {
+          this.currentLyric.stop()
+          this.currentTime = 0
+          this.playingLyric = ''
+          this.currentLineNum = 0
+        }
+        // 为了使手机端后台播放正常，使用setTimeout
+        setTimeout(() => {
+          this.$refs.audio.play()
+          this.getLyric()
+        }, 1000)
+      },
+      playing(newPlaying) {
+        const audio = this.$refs.audio
+        this.$nextTick(() => {
+          newPlaying ? audio.play() : audio.pause()
+        })
       }
     },
     components: {
       ProgressBar,
       ProgressCircle,
-      Scroll
+      Scroll,
+      Playlist
     }
   }
 </script>
