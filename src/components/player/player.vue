@@ -95,7 +95,7 @@
       </div>
     </transition>
     <playlist ref="playlist"></playlist>
-    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"
+    <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime"
             @ended="end"></audio>
   </div>
 </template>
@@ -222,6 +222,7 @@
         // 解决歌曲列表只有一首歌曲，点击下一首出现的异常情况
         if (this.playlist.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex + 1
           if (index === this.playlist.length) {
@@ -241,6 +242,7 @@
         // 解决歌曲列表只有一首歌曲，点击上一首出现的异常情况
         if (this.playlist.length === 1) {
           this.loop()
+          return
         } else {
           let index = this.currentIndex - 1
           if (index === -1) {
@@ -255,7 +257,7 @@
       },
       ready() {
         this.songReady = true
-        this.savePlayHistory(this.currentIndex)
+        this.savePlayHistory(this.currentSong)
       },
       error() {
         this.songReady = true
@@ -285,6 +287,10 @@
       getLyric() {
         this.currentSong.getLyric().then((lyric) => {
           this.currentLyric = new Lyric(lyric, this.handleLyric)
+          // 解决切换歌曲太快，歌词出现错乱
+          if (this.currentSong.lyric !== lyric) {
+            return
+          }
           if (this.playing) {
             this.currentLyric.play()
           }
@@ -414,7 +420,8 @@
           this.currentLineNum = 0
         }
         // 为了使手机端后台播放正常，使用setTimeout
-        setTimeout(() => {
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
           this.$refs.audio.play()
           this.getLyric()
         }, 1000)
